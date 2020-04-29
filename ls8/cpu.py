@@ -2,10 +2,12 @@
 
 import sys
 
-HLT = 0b00000001
-LDI = 0b10000010
-PRN = 0b01000111
-MUL = 0b10100010
+HLT  = 0b00000001
+LDI  = 0b10000010
+PRN  = 0b01000111
+MUL  = 0b10100010
+PUSH = 0b01000101
+POP  = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -15,6 +17,7 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.sp = 0xF4
 
     def load(self):
         """Load a program into memory."""
@@ -90,6 +93,25 @@ class CPU:
 
         print(self.reg[MAR])
 
+    def PUSH(self):
+        MAR = self.ram_read(self.pc + 1)
+        MDR = self.reg[MAR]
+
+        self.sp -= 1
+        self.ram[self.sp] = MDR
+
+    def POP(self):
+        MDR = self.ram[self.sp]
+        MAR = self.ram_read(self.pc + 1)
+
+        self.reg[MAR] = MDR
+
+        if self.sp >= 0xF4:
+            print("Underflow Error!")
+            sys.exit(1)
+        else:
+            self.sp += 1
+
     def HLT(self, run):
         run = False
         return run
@@ -104,14 +126,29 @@ class CPU:
             if IR == LDI:
                 self.LDI()
                 self.pc += 3
+
             elif IR == PRN:
                 self.PRN()
                 self.pc += 2
+
             elif IR == MUL:
                 reg_a = self.ram_read(self.pc + 1)
                 reg_b = self.ram_read(self.pc + 2)
 
                 self.alu(IR, reg_a, reg_b)
                 self.pc += 3
-            else:
+
+            elif IR == PUSH:
+                self.PUSH()
+                self.pc += 2
+
+            elif IR == POP:
+                self.POP()
+                self.pc += 2
+
+            elif IR == HLT:
                 run = self.HLT(run)
+
+            else:
+                print("Error!")
+                sys.exit(1)
