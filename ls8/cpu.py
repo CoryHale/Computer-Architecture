@@ -5,9 +5,12 @@ import sys
 HLT  = 0b00000001
 LDI  = 0b10000010
 PRN  = 0b01000111
+ADD  = 0b10100000
 MUL  = 0b10100010
 PUSH = 0b01000101
 POP  = 0b01000110
+CALL = 0b01010000
+RET  = 0b00010001
 
 class CPU:
     """Main CPU class."""
@@ -53,8 +56,9 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
+        # print(op)
 
-        if op == "ADD":
+        if op == ADD:
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
         elif op == MUL:
@@ -112,6 +116,19 @@ class CPU:
         else:
             self.sp += 1
 
+    def CALL(self):
+        return_address = self.pc + 2
+        self.sp -= 1
+        self.ram[self.sp] = return_address
+
+        MAR = self.ram[self.pc + 1]
+        self.pc = self.reg[MAR]
+
+    def RET(self):
+        return_value = self.ram[self.sp]
+        self.pc = return_value
+        self.sp += 1
+
     def HLT(self, run):
         run = False
         return run
@@ -126,28 +143,42 @@ class CPU:
             if IR == LDI:
                 self.LDI()
                 self.pc += 3
+                # print("LDI")
 
             elif IR == PRN:
                 self.PRN()
                 self.pc += 2
+                # print("PRN")
 
-            elif IR == MUL:
+            elif IR == MUL or IR == ADD:
                 reg_a = self.ram_read(self.pc + 1)
                 reg_b = self.ram_read(self.pc + 2)
 
                 self.alu(IR, reg_a, reg_b)
                 self.pc += 3
+                # print("ALU")
 
             elif IR == PUSH:
                 self.PUSH()
                 self.pc += 2
+                # print("PUSH")
 
             elif IR == POP:
                 self.POP()
                 self.pc += 2
+                # print("POP")
+
+            elif IR == CALL:
+                self.CALL()
+                # print("CALL")
+
+            elif IR == RET:
+                self.RET()
+                # print("RET")
 
             elif IR == HLT:
                 run = self.HLT(run)
+                # print("HLT")
 
             else:
                 print("Error!")

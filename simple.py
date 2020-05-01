@@ -8,6 +8,8 @@ PRINT_REGISTER = 5
 ADD            = 6
 PUSH           = 7
 POP            = 8
+CALL           = 9
+RET            = 10
 
 memory = [0] * 256
 
@@ -29,7 +31,7 @@ def load_memory(filename):
                 comment_split = line.split('#')
                 number_string = comment_split[0].strip()
 
-                if number_string = '':
+                if number_string == '':
                     continue
 
                 num = int(number_string)
@@ -88,6 +90,20 @@ while running is True:
         sp += 1
 
         pc += 2
+
+    elif command == CALL:
+        return_address = memory[pc + 2]
+        sp -= 1
+        memory[sp] = return_address
+
+        reg_address = memory[pc + 1]
+
+        pc = registers[reg_address]
+
+    elif command == RET:
+        return_value = memory[sp]
+        pc = return_value
+        sp += 1
 
     elif command == HALT:
         running = False
