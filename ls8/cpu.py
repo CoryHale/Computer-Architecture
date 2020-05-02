@@ -11,6 +11,10 @@ PUSH = 0b01000101
 POP  = 0b01000110
 CALL = 0b01010000
 RET  = 0b00010001
+CMP  = 0b10100111
+JMP  = 0b01010100
+JEQ  = 0b01010101
+JNE  = 0b01010110
 
 class CPU:
     """Main CPU class."""
@@ -21,6 +25,7 @@ class CPU:
         self.reg = [0] * 8
         self.pc = 0
         self.sp = 0xF4
+        self.FL = 0b00000000
 
     def load(self):
         """Load a program into memory."""
@@ -63,6 +68,11 @@ class CPU:
         #elif op == "SUB": etc
         elif op == MUL:
             self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
+        elif op == CMP:
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.FL = 0b00000001
+            else:
+                self.FL = 0b00000000
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -129,6 +139,31 @@ class CPU:
         self.pc = return_value
         self.sp += 1
 
+    def JMP(self):
+        MAR = self.ram[self.pc + 1]
+        jump_address = self.reg[MAR]
+
+        self.pc = jump_address
+
+
+    def JEQ(self):
+        MAR = self.ram[self.pc + 1]
+        jump_address = self.reg[MAR]
+
+        if self.FL == 1:
+            self.pc = jump_address
+        else:
+            self.pc += 2
+
+    def JNE(self):
+        MAR = self.ram[self.pc + 1]
+        jump_address = self.reg[MAR]
+
+        if self.FL == 0:
+            self.pc = jump_address
+        else:
+            self.pc += 2
+
     def HLT(self, run):
         run = False
         return run
@@ -150,7 +185,7 @@ class CPU:
                 self.pc += 2
                 # print("PRN")
 
-            elif IR == MUL or IR == ADD:
+            elif IR == MUL or IR == ADD or IR == CMP:
                 reg_a = self.ram_read(self.pc + 1)
                 reg_b = self.ram_read(self.pc + 2)
 
@@ -175,6 +210,18 @@ class CPU:
             elif IR == RET:
                 self.RET()
                 # print("RET")
+
+            elif IR == JMP:
+                self.JMP()
+                # print("JMP")
+
+            elif IR == JEQ:
+                self.JEQ()
+                # print("JEQ")
+
+            elif IR == JNE:
+                self.JNE()
+                # print("JNE")
 
             elif IR == HLT:
                 run = self.HLT(run)
